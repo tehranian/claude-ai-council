@@ -1,6 +1,6 @@
-# AI Council - Claude Code Skill
+# AI Council - Claude Code Plugin
 
-A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill that summons a council of specialized AI advisors to deliberate on your ideas, proposals, or decisions from multiple perspectives.
+A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) plugin that summons a council of specialized AI advisors to deliberate on your ideas, proposals, or decisions from multiple perspectives.
 
 ## What It Does
 
@@ -20,53 +20,63 @@ The AI Council launches parallel sub-agents, each with a distinct analytical len
 
 ## Installation
 
-### Option 1: Add as a skill directory
-
-Clone this repo into your Claude Code skills directory:
+Install as a Claude Code plugin:
 
 ```bash
-git clone https://github.com/tehranian/claude-ai-council.git ~/.claude/skills/ai-council
+claude plugin add /path/to/claude-ai-council
 ```
 
-### Option 2: Add to a project
-
-Clone into your project and reference it in your `.claude/settings.json`:
+Or clone and install from GitHub:
 
 ```bash
-cd your-project
-git clone https://github.com/tehranian/claude-ai-council.git .claude/skills/ai-council
+git clone https://github.com/tehranian/claude-ai-council.git
+claude plugin add ./claude-ai-council
 ```
 
 ## Usage
 
-In Claude Code, invoke the skill:
+### Summon the Council
 
 ```
 /ai-council
 ```
 
 You'll be prompted to:
-1. **Select council members** - Choose which perspectives you want
-2. **Describe your proposal** - What idea or decision needs analysis
-3. **Review results** - Each agent provides structured analysis
-4. **Optional debate** - Have agents challenge each other's positions
+1. **Select council members** — Choose which perspectives you want (agents are auto-discovered)
+2. **Describe your proposal** — What idea or decision needs analysis
+3. **Review results** — Each agent provides structured analysis
+4. **Optional debate** — Have agents challenge each other's positions
 
 Results are saved to `AI-COUNCIL.md` in your working directory.
+
+### Create a Custom Agent
+
+```
+/create-agent
+```
+
+Describe the perspective you want and the skill generates a complete agent file:
+
+```
+/create-agent I want an agent that focuses on security and threat modeling
+```
+
+The new agent is immediately available the next time you invoke `/ai-council`.
 
 ## Common Patterns
 
 | Pattern | Agents |
 |---------|--------|
-| **Full Council** | All 7 agents |
+| **Full Council** | All agents |
 | **Technical Review** | Technical Validator + Devil's Advocate + Neutral Analyst |
 | **Strategic Review** | Optimist Strategist + Growth Strategist + Devil's Advocate |
 | **Quick Feasibility** | Technical Validator + Neutral Analyst |
 
 ## Adding Custom Agents
 
-The council is designed to be extensible. You can create your own specialized agents to bring any perspective to the table -- a security auditor, a data engineer, an accessibility expert, whatever your team needs.
+The council automatically discovers all `.md` files in the `agents/` directory. The easiest way to add a new agent is with `/create-agent`, but you can also create one manually.
 
-### 1. Create the agent file
+### Manual creation
 
 Add a new `.md` file in the `agents/` directory. The file has two parts: YAML frontmatter and the system prompt.
 
@@ -118,20 +128,7 @@ You are the Security Auditor, a council member whose role is to...
 [The agent's unique role during multi-agent deliberations]
 ```
 
-### 2. Register the agent in SKILL.md
-
-Add your agent to two places in `SKILL.md`:
-
-**The agent selection prompt** (Step 1):
-```yaml
-- label: "Security Auditor"
-  description: "Identifies vulnerabilities, threat models, and security risks"
-```
-
-**The bundled agents table:**
-```markdown
-| Security Auditor | `agents/security-auditor.md` | Vulnerability analysis, threat modeling |
-```
+No registration step is needed — new agent files are discovered automatically.
 
 ### Tips for writing good agents
 

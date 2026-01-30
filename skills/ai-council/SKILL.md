@@ -18,6 +18,7 @@ The AI Council launches parallel sub-agents, each with a distinct analytical len
 digraph council_flow {
     rankdir=TB;
     "User invokes /ai-council" [shape=box];
+    "Discover agents via Glob" [shape=box];
     "Present agent selection (AskUserQuestion)" [shape=box];
     "User selects agents + provides proposal" [shape=box];
     "Launch selected agents in parallel (Task tool)" [shape=box];
@@ -28,7 +29,8 @@ digraph council_flow {
     "Append debate to AI-COUNCIL.md" [shape=box];
     "Synthesis and recommendations" [shape=box];
 
-    "User invokes /ai-council" -> "Present agent selection (AskUserQuestion)";
+    "User invokes /ai-council" -> "Discover agents via Glob";
+    "Discover agents via Glob" -> "Present agent selection (AskUserQuestion)";
     "Present agent selection (AskUserQuestion)" -> "User selects agents + provides proposal";
     "User selects agents + provides proposal" -> "Launch selected agents in parallel (Task tool)";
     "Launch selected agents in parallel (Task tool)" -> "Write all perspectives to AI-COUNCIL.md";
@@ -45,9 +47,14 @@ digraph council_flow {
 
 When this skill is invoked:
 
-### Step 1: Agent Selection
+### Step 1: Discover and Select Agents
 
-Use `AskUserQuestion` with multi-select to let the user choose which council members to summon:
+1. Use the `Glob` tool with pattern `agents/*.md` (relative to the plugin root) to discover all available agent files.
+2. Read each discovered file to extract the YAML frontmatter fields: `name`, `description`, `model`, and `color`.
+3. Build `AskUserQuestion` options dynamically from the discovered agents. For each agent:
+   - `label`: Convert the `name` field from kebab-case to Title Case (e.g., `devils-advocate` → `Devil's Advocate`)
+   - `description`: Use a short summary extracted from the first sentence of the `description` field
+4. Present the multi-select agent chooser:
 
 ```
 AskUserQuestion:
@@ -55,20 +62,7 @@ AskUserQuestion:
   header: "Council"
   multiSelect: true
   options:
-    - label: "Optimist Strategist"
-      description: "Explores best-case scenarios and success pathways"
-    - label: "Devil's Advocate"
-      description: "Stress-tests assumptions and surfaces hidden risks"
-    - label: "Neutral Analyst"
-      description: "Provides objective synthesis and trade-off analysis"
-    - label: "Technical Validator"
-      description: "Assesses engineering feasibility and implementation reality"
-    - label: "Legal Domain Expert"
-      description: "Analyzes legal risks, regulatory requirements, and compliance"
-    - label: "User Advocate"
-      description: "Champions user needs, identifies friction, validates UX"
-    - label: "Growth Strategist"
-      description: "Examines viral loops, acquisition channels, and scaling"
+    [dynamically built from discovered agents]
 ```
 
 ### Step 2: Gather the Proposal
@@ -80,10 +74,12 @@ If not already provided, ask the user for:
 
 ### Step 3: Launch Agents in Parallel
 
-For each selected agent, use the `Task` tool to launch a sub-agent with:
-- The agent's system prompt from their definition file (bundled in `agents/` subdirectory)
-- The user's proposal and context
-- Instructions to provide perspective-aligned analysis
+For each selected agent:
+
+1. Read the agent `.md` file from the `agents/` directory.
+2. Extract the `model` from frontmatter (default to `opus` if not specified).
+3. Use the file body (everything after the frontmatter closing `---`) as the agent's system prompt.
+4. Launch via the `Task` tool.
 
 **Critical**: Launch ALL selected agents in a single message with multiple Task tool calls for true parallel execution.
 
@@ -91,10 +87,10 @@ Example Task invocation pattern:
 ```
 Task:
   subagent_type: general-purpose
-  model: opus
+  model: [from agent frontmatter, default opus]
   description: "[Agent Name] council analysis"
   prompt: |
-    You are the [Agent Name]. [Insert agent system prompt here]
+    You are the [Agent Name]. [Insert agent system prompt body here]
 
     **Proposal to Analyze:**
     [User's proposal]
@@ -107,7 +103,7 @@ Task:
     Be specific and actionable. Include confidence levels for key claims.
 ```
 
-**Always use `model: opus`** for council agents to ensure the highest quality analysis.
+**Always use the model specified in the agent's frontmatter** (defaulting to `opus`) for council agents to ensure the highest quality analysis.
 
 ### Step 4: Write Deliberation Log
 
@@ -136,15 +132,7 @@ Use the following format:
 
 ## Council Perspectives
 
-### Optimist Strategist
-
-[Full analysis from this agent]
-
-**Confidence Level**: [X]%
-
----
-
-### Devil's Advocate
+### [Agent Name]
 
 [Full analysis from this agent]
 
@@ -235,21 +223,14 @@ Provide a unified summary and ensure `AI-COUNCIL.md` contains:
 - **Key Opportunities**: Top upsides identified
 - **Recommended Next Steps**: Actionable path forward
 
-## Bundled Agents
+## Extensibility
 
-This skill includes 7 council members in the `agents/` subdirectory:
+The council automatically discovers all agent files in the `agents/` directory. To add a new agent, either:
 
-| Agent | File | Role |
-|-------|------|------|
-| Optimist Strategist | `agents/optimist-strategist.md` | Best-case scenarios, success pathways |
-| Devil's Advocate | `agents/devils-advocate.md` | Risk identification, assumption stress-testing |
-| Neutral Analyst | `agents/neutral-analyst.md` | Evidence synthesis, trade-off mapping |
-| Technical Validator | `agents/technical-validator.md` | Feasibility assessment, implementation reality |
-| Legal Domain Expert | `agents/legal-domain-expert.md` | Legal risk, regulatory compliance, IP & ToS analysis |
-| User Advocate | `agents/user-advocate.md` | User experience, needs validation, friction identification |
-| Growth Strategist | `agents/growth-strategist.md` | Viral loops, acquisition channels, retention mechanics |
+- Use `/create-agent` to generate one from a natural language description
+- Manually create an `.md` file in `agents/` following the established frontmatter + system prompt pattern
 
-All agents use `model: opus` for highest quality analysis.
+New agents are immediately available the next time `/ai-council` is invoked — no registration step required.
 
 ## Quick Reference
 
@@ -284,14 +265,14 @@ Select: Technical Validator + Neutral Analyst
 
 User: `/ai-council`
 
-Claude presents agent selection, user selects all agents and provides:
-> "We're considering building an AI-powered code review tool that integrates with GitHub. Target market is enterprise teams. Budget is $200K for MVP."
-
 Claude:
-1. Launches 7 parallel Task agents (all using Opus)
-2. Collects all responses
-3. Writes complete deliberation to `AI-COUNCIL.md`
-4. Presents summary to user
-5. Offers debate option
-6. If debate requested, appends debate to file
-7. Finalizes synthesis in file and presents recommendations
+1. Discovers all agents in `agents/` via Glob
+2. Presents dynamic multi-select with discovered agents
+3. User selects agents and provides proposal
+4. Launches parallel Task agents (each using their configured model)
+5. Collects all responses
+6. Writes complete deliberation to `AI-COUNCIL.md`
+7. Presents summary to user
+8. Offers debate option
+9. If debate requested, appends debate to file
+10. Finalizes synthesis in file and presents recommendations

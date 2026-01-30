@@ -1,0 +1,12 @@
+{
+  "name": "ai-council",
+  "description": "Summon a council of AI advisors for multi-perspective analysis. Extensible with custom agents.",
+  "version": "2.0.0",
+  "author": {
+    "name": "Darius Tehranian"
+  },
+  "homepage": "https://github.com/tehranian/claude-ai-council",
+  "repository": "https://github.com/tehranian/claude-ai-council",
+  "license": "MIT",
+  "keywords": ["analysis", "multi-perspective", "council", "agents", "deliberation"]
+}
