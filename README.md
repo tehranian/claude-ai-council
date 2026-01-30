@@ -64,13 +64,82 @@ Results are saved to `AI-COUNCIL.md` in your working directory.
 
 ## Adding Custom Agents
 
-Create a new `.md` file in the `agents/` directory following the existing agent format. Each agent file needs:
+The council is designed to be extensible. You can create your own specialized agents to bring any perspective to the table -- a security auditor, a data engineer, an accessibility expert, whatever your team needs.
 
-- YAML frontmatter with `name`, `description`, `model`, and `color`
-- A system prompt defining the agent's persona and analytical framework
-- An output structure section
+### 1. Create the agent file
 
-Then update `SKILL.md` to include the new agent in the selection options and agent table.
+Add a new `.md` file in the `agents/` directory. The file has two parts: YAML frontmatter and the system prompt.
+
+**Frontmatter fields:**
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Kebab-case identifier (e.g. `security-auditor`) |
+| `description` | Yes | When Claude should use this agent, with examples |
+| `model` | Yes | Model to use (`opus` recommended for best analysis) |
+| `color` | No | Display color for the agent |
+
+**System prompt structure:**
+
+The body of the file is a system prompt that defines the agent's persona. Follow this pattern:
+
+```markdown
+---
+name: security-auditor
+description: "Use this agent when you need security analysis..."
+model: opus
+color: red
+---
+
+You are the Security Auditor, a council member whose role is to...
+
+## Your Core Philosophy
+
+[2-4 guiding principles that shape this agent's perspective]
+
+## Your Analytical Framework
+
+[Numbered list of what the agent examines when analyzing a proposal]
+
+## How You Communicate
+
+[Bullet points defining the agent's communication style]
+
+## Your Voice
+
+[A paragraph describing the agent's tone and personality]
+
+## Output Structure
+
+[Numbered sections the agent should include in every response]
+
+## When the Council Gathers
+
+[The agent's unique role during multi-agent deliberations]
+```
+
+### 2. Register the agent in SKILL.md
+
+Add your agent to two places in `SKILL.md`:
+
+**The agent selection prompt** (Step 1):
+```yaml
+- label: "Security Auditor"
+  description: "Identifies vulnerabilities, threat models, and security risks"
+```
+
+**The bundled agents table:**
+```markdown
+| Security Auditor | `agents/security-auditor.md` | Vulnerability analysis, threat modeling |
+```
+
+### Tips for writing good agents
+
+- **Give it a clear point of view.** The best agents have a strong perspective, not a generic one. "Calibrated skeptic" is better than "general analyst."
+- **Define what it is AND what it isn't.** Explicitly stating what the agent does *not* do prevents it from drifting into generic advice.
+- **Include an analytical framework.** A structured checklist of what to examine produces more consistent, thorough output than open-ended instructions.
+- **Specify output structure.** Numbered sections ensure every analysis covers the same ground and is easy to compare across agents.
+- **Write detailed examples in the description.** The `description` field in the frontmatter tells Claude *when* to use this agent. More examples = better automatic selection.
 
 ## License
 
