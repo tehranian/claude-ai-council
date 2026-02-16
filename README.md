@@ -20,17 +20,15 @@ The AI Council launches parallel sub-agents, each with a distinct analytical len
 
 ## Installation
 
-Install as a Claude Code plugin:
-
 ```bash
-claude plugin add /path/to/claude-ai-council
+npx skills add tehranian/claude-ai-council
 ```
 
-Or clone and install from GitHub:
+Or install a specific skill:
 
 ```bash
-git clone https://github.com/tehranian/claude-ai-council.git
-claude plugin add ./claude-ai-council
+npx skills add tehranian/claude-ai-council/ai-council
+npx skills add tehranian/claude-ai-council/create-agent
 ```
 
 ## Usage
